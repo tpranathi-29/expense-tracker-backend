@@ -5,20 +5,31 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 
+import jakarta.annotation.PostConstruct;
+
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
 
 @Component
 public class JwtUtil {
 
-    private static final SecretKey SECRET_KEY =
-            Keys.hmacShaKeyFor(
-                    "mysecretkeymysecretkeymysecretkey"
-                            .getBytes()
-            );
+    @Value("${JWT_SECRET}")
+private String secret;
+
+    private SecretKey secretKey;
+
+    @PostConstruct
+    public void init() {
+        secretKey = Keys.hmacShaKeyFor(
+                secret.getBytes(StandardCharsets.UTF_8)
+        );
+    }
+
 
     // Generate JWT Token
     public String generateToken(String email) {
@@ -37,7 +48,7 @@ public class JwtUtil {
                 )
 
                 .signWith(
-                        SECRET_KEY,
+        secretKey,
                         SignatureAlgorithm.HS256
                 )
 
@@ -49,7 +60,7 @@ public class JwtUtil {
 
         Claims claims = Jwts.parser()
 
-                .verifyWith(SECRET_KEY)
+                .verifyWith(secretKey)
 
                 .build()
 
@@ -65,7 +76,7 @@ public class JwtUtil {
 
         return Jwts.parser()
 
-                .verifyWith(SECRET_KEY)
+                .verifyWith(secretKey)
 
                 .build()
 
@@ -96,6 +107,7 @@ public class JwtUtil {
             return false;
 
         }
+
 
     }
 
