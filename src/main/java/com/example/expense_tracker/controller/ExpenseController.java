@@ -25,7 +25,6 @@ import java.util.List;
 @RequestMapping("/expenses")
 @Tag(name = "Expense Controller")
 @SecurityRequirement(name = "Bearer Authentication")
-@CrossOrigin(origins = "https://expense-tracker-frontend-vree.onrender.com")
 public class ExpenseController {
 
     private final ExpenseService expenseService;

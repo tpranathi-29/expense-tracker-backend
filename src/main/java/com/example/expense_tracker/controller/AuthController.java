@@ -10,7 +10,6 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/auth")
-@CrossOrigin(origins = "https://expense-tracker-frontend-vree.onrender.com")
 public class AuthController {
 
     @Autowired
