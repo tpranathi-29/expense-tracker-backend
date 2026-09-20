@@ -336,6 +336,7 @@ function App() {
   const [form, setForm] = useState(emptyForm);
   const [receipt, setReceipt] = useState(null);
   const [ocrResult, setOcrResult] = useState(null);
+  const [ocrBusy, setOcrBusy] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
 
@@ -367,23 +368,31 @@ function App() {
     localStorage.removeItem("ledgerly-token");
     setToken(null);
   }
-  function chooseReceipt() {
-    return new Promise((resolve) => {
-      const input = document.createElement("input");
-      input.type = "file";
-      input.accept = "image/*";
-      input.onchange = () => resolve(input.files?.[0] || null);
-      input.click();
-    });
+  async function analyzeReceipt(file) {
+    if (!file) return;
+    setReceipt(file);
+    setOcrResult(null);
+    setOcrBusy(true);
+    try {
+      const body = new FormData();
+      body.append("file", file);
+      const result = await request("/expenses/receipt/ocr", { method: "POST", body }, token);
+      setOcrResult(result);
+      setForm((current) => ({
+        ...current,
+        title: result.merchant || current.title,
+        amount: result.amount ? String(result.amount) : current.amount,
+        description: result.rawText || current.description,
+      }));
+    } catch (err) {
+      setError(err.message || "Could not read this receipt.");
+    } finally {
+      setOcrBusy(false);
+    }
   }
   async function saveExpense(event) {
     event.preventDefault();
     try {
-      const selectedReceipt =
-        receipt ||
-        (window.confirm("Attach a receipt for OCR?")
-          ? await chooseReceipt()
-          : null);
       const expense = await request(
         "/expenses",
         {
@@ -392,9 +401,9 @@ function App() {
         },
         token,
       );
-      if (selectedReceipt) {
+      if (receipt) {
         const body = new FormData();
-        body.append("file", selectedReceipt);
+        body.append("file", receipt);
         const result = await request(
           `/expenses/${expense.id}/receipt`,
           { method: "POST", body },
@@ -405,6 +414,7 @@ function App() {
       setModal(false);
       setForm(emptyForm);
       setReceipt(null);
+      setOcrResult(null);
       loadData();
     } catch {
       setError("Could not save this expense or analyze the receipt.");
@@ -736,8 +746,22 @@ function App() {
                 placeholder="A little context helps later."
               />
             </label>
+            <label>
+              Receipt photo
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => analyzeReceipt(e.target.files?.[0])}
+              />
+            </label>
+            {ocrBusy && <div className="form-message">Reading receipt...</div>}
+            {ocrResult && !ocrBusy && (
+              <div className="form-message">
+                {ocrResult.message || "Receipt analyzed. Review the fields before saving."}
+              </div>
+            )}
             <button className="primary-button" type="submit">
-              <Plus size={17} /> Save expense
+              <Plus size={17} /> {ocrBusy ? "Reading receipt..." : "Save expense"}
             </button>
           </form>
         </div>

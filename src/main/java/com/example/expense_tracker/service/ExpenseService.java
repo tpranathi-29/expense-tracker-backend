@@ -21,6 +21,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 public class ExpenseService {
@@ -255,6 +256,28 @@ public class ExpenseService {
                     "Failed to upload receipt.",
                     e
             );
+        }
+    }
+
+    public ReceiptOcrResult analyzeReceipt(MultipartFile file, String email) {
+        if (file == null || file.isEmpty()) {
+            throw new IllegalArgumentException("Receipt file is required");
+        }
+
+        Path temporaryFile = Paths.get(System.getProperty("java.io.tmpdir"),
+                "receipt-" + UUID.randomUUID() + "-" + file.getOriginalFilename());
+        try {
+            file.transferTo(temporaryFile);
+            ReceiptOcrService.OcrData ocr = receiptOcrService.extract(temporaryFile);
+            return new ReceiptOcrResult(null, ocr.merchant(), ocr.amount(), ocr.rawText(),
+                    ocr.message() == null ? "Receipt analyzed." : ocr.message());
+        } catch (IOException exception) {
+            throw new RuntimeException("Failed to analyze receipt.", exception);
+        } finally {
+            try {
+                Files.deleteIfExists(temporaryFile);
+            } catch (IOException ignored) {
+            }
         }
     }
 

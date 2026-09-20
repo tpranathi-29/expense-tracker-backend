@@ -193,6 +193,16 @@ public class ExpenseController {
     // Upload Receipt
     // =====================================================
 
+        @PostMapping("/receipt/ocr")
+        public ResponseEntity<ReceiptOcrResult> analyzeReceipt(
+                        @RequestParam("file") MultipartFile file,
+                        Authentication authentication) {
+
+                return ResponseEntity.ok(
+                                expenseService.analyzeReceipt(file, authentication.getName())
+                );
+        }
+
     @PostMapping("/{id}/receipt")
         public ResponseEntity<ReceiptOcrResult> uploadReceipt(
             @PathVariable Long id,
