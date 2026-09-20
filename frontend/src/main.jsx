@@ -52,6 +52,8 @@ function App() {
   const [category, setCategory] = useState('All')
   const [modal, setModal] = useState(false)
   const [form, setForm] = useState(emptyForm)
+  const [receipt, setReceipt] = useState(null)
+  const [ocrResult, setOcrResult] = useState(null)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(true)
 
@@ -63,7 +65,8 @@ function App() {
   }
   useEffect(() => { if (token) loadData() }, [token])
   function logout() { localStorage.removeItem('ledgerly-token'); setToken(null) }
-  async function saveExpense(event) { event.preventDefault(); try { await request('/expenses', { method: 'POST', body: JSON.stringify({ ...form, amount: Number(form.amount) }) }, token); setModal(false); setForm(emptyForm); loadData() } catch { setError('Could not save this expense.') } }
+  function chooseReceipt() { return new Promise(resolve => { const input = document.createElement('input'); input.type = 'file'; input.accept = 'image/*'; input.onchange = () => resolve(input.files?.[0] || null); input.click() }) }
+  async function saveExpense(event) { event.preventDefault(); try { const selectedReceipt = receipt || (window.confirm('Attach a receipt for OCR?') ? await chooseReceipt() : null); const expense = await request('/expenses', { method: 'POST', body: JSON.stringify({ ...form, amount: Number(form.amount) }) }, token); if (selectedReceipt) { const body = new FormData(); body.append('file', selectedReceipt); const result = await request(`/expenses/${expense.id}/receipt`, { method: 'POST', body }, token); setOcrResult(result) } setModal(false); setForm(emptyForm); setReceipt(null); loadData() } catch { setError('Could not save this expense or analyze the receipt.') } }
   async function removeExpense(id) { if (!window.confirm('Delete this expense?')) return; try { await request(`/expenses/${id}`, { method: 'DELETE' }, token); loadData() } catch { setError('Could not delete this expense.') } }
   async function downloadReport() { const response = await fetch(`${API_URL}/expenses/report/pdf`, { headers: { Authorization: `Bearer ${token}` } }); const blob = await response.blob(); const url = URL.createObjectURL(blob); const link = document.createElement('a'); link.href = url; link.download = 'Expense_Report.pdf'; link.click(); URL.revokeObjectURL(url) }
   const visibleExpenses = useMemo(() => expenses.filter(item => (category === 'All' || item.category === category) && `${item.title} ${item.description} ${item.category}`.toLowerCase().includes(query.toLowerCase())), [expenses, category, query])

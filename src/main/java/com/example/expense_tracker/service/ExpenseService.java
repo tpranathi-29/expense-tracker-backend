@@ -2,6 +2,7 @@ package com.example.expense_tracker.service;
 
 import com.example.expense_tracker.dto.ExpenseSummaryDTO;
 import com.example.expense_tracker.dto.MonthlyExpenseProjection;
+import com.example.expense_tracker.dto.ReceiptOcrResult;
 import com.example.expense_tracker.exception.ResourceNotFoundException;
 import com.example.expense_tracker.model.Expense;
 import com.example.expense_tracker.model.User;
@@ -27,15 +28,18 @@ public class ExpenseService {
     private final ExpenseRepository expenseRepository;
     private final UserRepository userRepository;
     private final PdfService pdfService;
+    private final ReceiptOcrService receiptOcrService;
 
     public ExpenseService(
             ExpenseRepository expenseRepository,
             UserRepository userRepository,
-            PdfService pdfService) {
+            PdfService pdfService,
+            ReceiptOcrService receiptOcrService) {
 
         this.expenseRepository = expenseRepository;
         this.userRepository = userRepository;
         this.pdfService = pdfService;
+        this.receiptOcrService = receiptOcrService;
     }
 
     // =====================================================
@@ -200,7 +204,7 @@ public class ExpenseService {
     // Upload Receipt
     // =====================================================
 
-    public void uploadReceipt(
+    public ReceiptOcrResult uploadReceipt(
             Long id,
             MultipartFile file,
             String email) {
@@ -236,6 +240,14 @@ public class ExpenseService {
             expense.setReceipt(fileName);
 
             expenseRepository.save(expense);
+
+                ReceiptOcrService.OcrData ocr = receiptOcrService.extract(filePath);
+                return new ReceiptOcrResult(
+                    fileName,
+                    ocr.merchant(),
+                    ocr.amount(),
+                    ocr.rawText(),
+                    ocr.message() == null ? "Receipt uploaded and analyzed." : ocr.message());
 
         } catch (IOException e) {
 

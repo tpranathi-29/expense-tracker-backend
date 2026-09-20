@@ -2,6 +2,7 @@ package com.example.expense_tracker.controller;
 
 import com.example.expense_tracker.dto.ExpenseSummaryDTO;
 import com.example.expense_tracker.dto.MonthlyExpenseProjection;
+import com.example.expense_tracker.dto.ReceiptOcrResult;
 import com.example.expense_tracker.model.Expense;
 import com.example.expense_tracker.service.ExpenseService;
 
@@ -193,22 +194,20 @@ public class ExpenseController {
     // =====================================================
 
     @PostMapping("/{id}/receipt")
-    public ResponseEntity<String> uploadReceipt(
+        public ResponseEntity<ReceiptOcrResult> uploadReceipt(
             @PathVariable Long id,
             @RequestParam("file") MultipartFile file,
             Authentication authentication) {
 
         String email = authentication.getName();
 
-        expenseService.uploadReceipt(
+        ReceiptOcrResult result = expenseService.uploadReceipt(
                 id,
                 file,
                 email
         );
 
-        return ResponseEntity.ok(
-                "Receipt uploaded successfully!"
-        );
+        return ResponseEntity.ok(result);
     }
 
     // =====================================================
