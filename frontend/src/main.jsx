@@ -3,7 +3,10 @@ import { ArrowDownRight, ArrowUpRight, BarChart3, CalendarDays, Download, LogOut
 import './styles.css'
 
 const configuredApiUrl = import.meta.env.VITE_API_URL?.trim()
-const API_URL = (configuredApiUrl || 'http://localhost:8080').replace(/\/$/, '')
+const defaultApiUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+  ? 'http://localhost:8080'
+  : 'https://expense-tracker-backend-q5a1.onrender.com'
+const API_URL = (configuredApiUrl || defaultApiUrl).replace(/\/$/, '')
 const categories = ['Food', 'Transport', 'Housing', 'Health', 'Shopping', 'Entertainment', 'Other']
 const emptyForm = { title: '', amount: '', category: 'Food', type: 'Expense', date: new Date().toISOString().slice(0, 10), description: '' }
 
