@@ -1,12 +1,12 @@
 package com.example.expense_tracker.config;
 
+import java.util.Arrays;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-
-import java.util.Arrays;
 
 @Configuration
 public class CorsConfig {
@@ -16,46 +16,39 @@ public class CorsConfig {
 
         CorsConfiguration configuration = new CorsConfiguration();
 
-        // Allow React Frontend
         configuration.setAllowedOrigins(Arrays.asList(
-                "http://localhost:3000",
-                "http://127.0.0.1:3000",
-                "https://expense-tracker-frontend-vree.onrender.com"
+            "https://expense-tracker-frontend-three-orpin.vercel.app",
+            "http://localhost:5173",
+            "http://localhost:3000"
         ));
 
-        // Allow HTTP Methods
+        configuration.setAllowedOriginPatterns(Arrays.asList(
+            "https://*.vercel.app"
+        ));
+
         configuration.setAllowedMethods(Arrays.asList(
-                "GET",
-                "POST",
-                "PUT",
-                "DELETE",
-                "PATCH",
-                "OPTIONS"
+            "GET",
+            "POST",
+            "PUT",
+            "DELETE",
+            "PATCH",
+            "OPTIONS"
         ));
 
-        // Allow Headers
-        configuration.setAllowedHeaders(Arrays.asList(
-                "*"
-        ));
+        configuration.setAllowedHeaders(Arrays.asList("*"));
 
-        // Expose Authorization Header
         configuration.setExposedHeaders(Arrays.asList(
-                "Authorization"
+            "Authorization"
         ));
 
-        // Allow Cookies/JWT
         configuration.setAllowCredentials(true);
 
-        // Cache Preflight Request
         configuration.setMaxAge(3600L);
 
         UrlBasedCorsConfigurationSource source =
-                new UrlBasedCorsConfigurationSource();
+            new UrlBasedCorsConfigurationSource();
 
-        source.registerCorsConfiguration(
-                "/**",
-                configuration
-        );
+        source.registerCorsConfiguration("/**", configuration);
 
         return source;
     }
